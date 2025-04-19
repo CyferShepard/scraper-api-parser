@@ -1,5 +1,5 @@
 import { DOMParser, Document } from "./deps.ts";
-import { ScraperPayload, ScraperResponse } from "./models/index.ts";
+import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts";
 export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex } from "./models/index.ts";
 
 export async function parseQuery(payload: ScraperPayload, parsedResponse?: Document): Promise<ScraperResponse | null> {
@@ -32,24 +32,19 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
             });
             const subResponse = await parseQuery(subPayload, elementDocument);
             if (subResponse && subResponse.results.length > 0) {
-              addResult(subQueryResult, subQuery.label, subResponse.results[0][subQuery.label], subQuery.transformProcess);
+              addResult(subQueryResult, subQuery, subResponse.results[0][subQuery.label]);
             }
           }
           if (Object.keys(subQueryResult).length > 0) {
-            addResult(result, query.label, subQueryResult, query.transformProcess);
+            addResult(result, query, subQueryResult);
           }
         } else {
           if (query.withHref) {
-            addResult(result, query.label, element.getAttribute("href") || element.getAttribute("src"), query.transformProcess);
+            addResult(result, query, element.getAttribute("href") || element.getAttribute("src"));
           } else if (query.dataProp) {
-            addResult(
-              result,
-              query.label,
-              element.getAttribute(query.dataProp) || element.getAttribute("src"),
-              query.transformProcess
-            );
+            addResult(result, query, element.getAttribute(query.dataProp) || element.getAttribute("src"));
           } else {
-            addResult(result, query.label, element.textContent?.replace(/\s+/g, " ").trim(), query.transformProcess);
+            addResult(result, query, element.textContent?.replace(/\s+/g, " ").trim());
           }
         }
 
@@ -79,26 +74,21 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
   }
 }
 
-function addResult(
-  result: Record<string, unknown>,
-  key: string,
-  value: unknown,
-  transformProcess?: (value: string) => unknown
-): Record<string, unknown> {
+function addResult(result: Record<string, unknown>, query: ScraperQuery, value: unknown): Record<string, unknown> {
   if (value == null || value === "") {
     return result;
   }
-  if (transformProcess != undefined) {
-    value = transformProcess(value as string);
+  if (query.transformProcess != undefined) {
+    value = query.transformProcess(value as string);
   }
-  if (result[key]) {
-    if (Array.isArray(result[key])) {
-      (result[key] as unknown[]).push(value);
+  if (result[query.label]) {
+    if (Array.isArray(result[query.label])) {
+      (result[query.label] as unknown[]).push(value);
     } else {
-      result[key] = [result[key], value];
+      result[query.label] = [result[query.label], value];
     }
   } else {
-    result[key] = value;
+    result[query.label] = value;
   }
   return result;
 }

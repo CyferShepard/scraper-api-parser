@@ -18,7 +18,7 @@ enum BodyType {
 class ScraperPayload {
   url: string;
   type: HTTPMethod;
-  body: Record<string, unknown>;
+  body: Record<string, unknown> | FormData;
   bodyType: BodyType;
   query: ScraperQuery[];
 
@@ -31,7 +31,7 @@ class ScraperPayload {
   }: {
     url: string;
     type?: HTTPMethod;
-    body?: Record<string, unknown>;
+    body?: Record<string, unknown> | FormData;
     bodyType?: BodyType;
     query: ScraperQuery[];
   }) {
@@ -46,17 +46,33 @@ class ScraperPayload {
     return {
       url: this.url,
       type: this.type,
-      body: this.body,
+      body: new URLSearchParams(this.body as Record<string, string>).toString(),
       bodyType: this.bodyType,
       query: this.query.map((e) => e.toJson()),
     };
   }
 
   static fromJson(json: Record<string, unknown>): ScraperPayload {
+    let body: Record<string, unknown> | FormData = {};
+
+    if (typeof json["body"] === "string") {
+      if (json["bodyType"] === BodyType.FORM_DATA) {
+        // Convert URL-encoded string back to FormData
+        const formData = new FormData();
+        const params = new URLSearchParams(json["body"]);
+        for (const [key, value] of params.entries()) {
+          formData.append(key, value);
+        }
+        body = formData;
+      }
+    } else {
+      body = json["body"] as Record<string, unknown>;
+    }
+
     return new ScraperPayload({
       url: json["url"] as string,
       type: (json["type"] as HTTPMethod) || HTTPMethod.GET,
-      body: json["body"] as Record<string, unknown>,
+      body: body,
       bodyType: (json["bodyType"] as BodyType) || BodyType.JSON,
       query: (json["query"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)),
     });

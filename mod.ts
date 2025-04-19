@@ -115,14 +115,30 @@ function mergeResults(results: Record<string, unknown>[]): Record<string, unknow
 async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
   console.log(`Fetching HTML from: ${payload.url}`);
   let response;
+  let headers: HeadersInit = {};
+  let body: string | null = null;
+  switch (payload.bodyType) {
+    case "FORM_DATA":
+      headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+      };
+      body = new URLSearchParams(payload.body as Record<string, string>).toString(); // Assuming the first query contains the data to be sent
+      break;
+    case "JSON":
+      headers = {
+        "Content-Type": "application/json",
+      };
+      body = JSON.stringify(payload.body); // Assuming the first query contains the data to be sent
+      break;
+    default:
+      headers = {};
+  }
   switch (payload.type) {
     case "POST":
       response = await fetch(payload.url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: JSON.stringify(payload.body), // Assuming the first query contains the data to be sent
+        headers: headers,
+        body: body, // Assuming the first query contains the data to be sent
       });
       break;
     default:

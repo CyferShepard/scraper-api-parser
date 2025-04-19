@@ -9,7 +9,7 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
     let results: Record<string, unknown>[] = [];
 
     for (const query of payload.query) {
-      if (query.element === "") continue; // Skip if the element is empty
+      if (query.element == undefined || query.element === "") continue; // Skip if the element is empty
       const elements = response.querySelectorAll(query.element);
       const result: Record<string, unknown> = {};
 

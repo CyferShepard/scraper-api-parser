@@ -2,7 +2,7 @@ import ScraperRegex from "./ScraperRegex.ts";
 
 class ScraperQuery {
   label: string;
-  element: string;
+  element: string | undefined;
   getContent: boolean;
   withHref: boolean;
   dataProp?: string;
@@ -21,7 +21,7 @@ class ScraperQuery {
     regex,
   }: {
     label: string;
-    element: string;
+    element?: string;
     getContent?: boolean;
     withHref?: boolean;
     dataProp?: string;

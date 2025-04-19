@@ -3,7 +3,7 @@ import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts
 export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex } from "./models/index.ts";
 
 export async function parseQuery(payload: ScraperPayload, parsedResponse?: Document): Promise<ScraperResponse | null> {
-  const response = parsedResponse ?? (await fetchHtml(payload.url));
+  const response = parsedResponse ?? (await fetchHtml(payload));
 
   if (response) {
     let results: Record<string, unknown>[] = [];
@@ -112,9 +112,24 @@ function mergeResults(results: Record<string, unknown>[]): Record<string, unknow
   return merged;
 }
 
-async function fetchHtml(url: string): Promise<Document | null> {
-  console.log(`Fetching HTML from: ${url}`);
-  const response = await fetch(url);
+async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
+  console.log(`Fetching HTML from: ${payload.url}`);
+  let response;
+  switch (payload.type) {
+    case "POST":
+      response = await fetch(payload.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: JSON.stringify(payload.body), // Assuming the first query contains the data to be sent
+      });
+      break;
+    default:
+      response = await fetch(payload.url);
+      break;
+  }
+
   if (!response.ok) {
     console.error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
     return null;

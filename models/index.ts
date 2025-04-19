@@ -1,6 +1,6 @@
-import ScraperPayload from "./ScraperPayload.ts";
+import { ScraperPayload, HTTPMethod } from "./ScraperPayload.ts";
 import ScraperResponse from "./ScraperResponse.ts";
 import ScraperQuery from "./ScraperQuery.ts";
 import ScraperRegex from "./ScraperRegex.ts";
 
-export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex };
+export { ScraperPayload, HTTPMethod, ScraperResponse, ScraperQuery, ScraperRegex };

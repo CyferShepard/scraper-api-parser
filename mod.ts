@@ -32,19 +32,24 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
             });
             const subResponse = await parseQuery(subPayload, elementDocument);
             if (subResponse && subResponse.results.length > 0) {
-              addResult(subQueryResult, subQuery.label, subResponse.results[0][subQuery.label]);
+              addResult(subQueryResult, subQuery.label, subResponse.results[0][subQuery.label], subQuery.transformProcess);
             }
           }
           if (Object.keys(subQueryResult).length > 0) {
-            addResult(result, query.label, subQueryResult);
+            addResult(result, query.label, subQueryResult, query.transformProcess);
           }
         } else {
           if (query.withHref) {
-            addResult(result, query.label, element.getAttribute("href") || element.getAttribute("src"));
+            addResult(result, query.label, element.getAttribute("href") || element.getAttribute("src"), query.transformProcess);
           } else if (query.dataProp) {
-            addResult(result, query.label, element.getAttribute(query.dataProp) || element.getAttribute("src"));
+            addResult(
+              result,
+              query.label,
+              element.getAttribute(query.dataProp) || element.getAttribute("src"),
+              query.transformProcess
+            );
           } else {
-            addResult(result, query.label, element.textContent?.replace(/\s+/g, " ").trim());
+            addResult(result, query.label, element.textContent?.replace(/\s+/g, " ").trim(), query.transformProcess);
           }
         }
 
@@ -74,9 +79,17 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
   }
 }
 
-function addResult(result: Record<string, unknown>, key: string, value: unknown): Record<string, unknown> {
+function addResult(
+  result: Record<string, unknown>,
+  key: string,
+  value: unknown,
+  transformProcess?: (value: string) => unknown
+): Record<string, unknown> {
   if (value == null || value === "") {
     return result;
+  }
+  if (transformProcess != undefined) {
+    value = transformProcess(value as string);
   }
   if (result[key]) {
     if (Array.isArray(result[key])) {

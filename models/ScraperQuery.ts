@@ -9,6 +9,7 @@ class ScraperQuery {
   subQuery?: ScraperQuery[];
   selectItemsAtIndex: number[];
   regex?: ScraperRegex;
+  transformProcess?: (value: string) => unknown;
 
   constructor({
     label,
@@ -19,6 +20,7 @@ class ScraperQuery {
     subQuery,
     selectItemsAtIndex,
     regex,
+    transformProcess,
   }: {
     label: string;
     element?: string;
@@ -28,6 +30,7 @@ class ScraperQuery {
     subQuery?: ScraperQuery[];
     selectItemsAtIndex?: number[];
     regex?: ScraperRegex;
+    transformProcess?: (value: string) => unknown;
   }) {
     this.label = label;
     this.element = element;
@@ -37,6 +40,7 @@ class ScraperQuery {
     this.subQuery = subQuery;
     this.selectItemsAtIndex = selectItemsAtIndex ?? [];
     this.regex = regex;
+    this.transformProcess = transformProcess;
   }
 
   static fromJson(json: Record<string, unknown>): ScraperQuery {
@@ -49,6 +53,7 @@ class ScraperQuery {
       subQuery: (json["subQuery"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)) ?? [],
       selectItemsAtIndex: (json["selectItemsAtIndex"] as Array<number>) ?? [],
       regex: json["regex"] ? ScraperRegex.fromJson(json["regex"] as Record<string, unknown>) : undefined,
+      transformProcess: json["transformProcess"] ? (json["transformProcess"] as () => unknown) : undefined,
     });
   }
 
@@ -62,6 +67,7 @@ class ScraperQuery {
       subQuery: this.subQuery?.map((e) => e.toJson()),
       selectItemsAtIndex: this.selectItemsAtIndex ?? [],
       regex: this.regex ? this.regex.toJson() : undefined,
+      transformProcess: this.transformProcess ? this.transformProcess.toString() : undefined,
     };
   }
 }

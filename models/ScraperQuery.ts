@@ -53,7 +53,7 @@ class ScraperQuery {
       subQuery: (json["subQuery"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)) ?? [],
       selectItemsAtIndex: (json["selectItemsAtIndex"] as Array<number>) ?? [],
       regex: json["regex"] ? ScraperRegex.fromJson(json["regex"] as Record<string, unknown>) : undefined,
-      transformProcess: json["transformProcess"] ? (json["transformProcess"] as () => unknown) : undefined,
+      transformProcess: json["transformProcess"] ? eval(json["transformProcess"] as string) : undefined,
     });
   }
 

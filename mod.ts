@@ -1,6 +1,6 @@
 import { DOMParser, Document } from "./deps.ts";
 import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts";
-export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex } from "./models/index.ts";
+export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex, HTTPMethod } from "./models/index.ts";
 
 export async function parseQuery(payload: ScraperPayload, parsedResponse?: Document): Promise<ScraperResponse | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));

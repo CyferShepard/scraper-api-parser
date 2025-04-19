@@ -10,26 +10,35 @@ enum HTTPMethod {
   OPTIONS = "OPTIONS",
 }
 
+enum BodyType {
+  JSON = "JSON",
+  FORM_DATA = "FORM_DATA",
+}
+
 class ScraperPayload {
+  url: string;
   type: HTTPMethod;
   body: Record<string, unknown>;
-  url: string;
+  bodyType: BodyType;
   query: ScraperQuery[];
 
   constructor({
     url,
     type = HTTPMethod.GET,
     body = {},
+    bodyType = BodyType.JSON,
     query,
   }: {
     url: string;
     type?: HTTPMethod;
     body?: Record<string, unknown>;
+    bodyType?: BodyType;
     query: ScraperQuery[];
   }) {
     this.url = url;
     this.type = type;
     this.body = body;
+    this.bodyType = bodyType;
     this.query = query;
   }
 
@@ -38,6 +47,7 @@ class ScraperPayload {
       url: this.url,
       type: this.type,
       body: this.body,
+      bodyType: this.bodyType,
       query: this.query.map((e) => e.toJson()),
     };
   }
@@ -47,9 +57,10 @@ class ScraperPayload {
       url: json["url"] as string,
       type: (json["type"] as HTTPMethod) || HTTPMethod.GET,
       body: json["body"] as Record<string, unknown>,
+      bodyType: (json["bodyType"] as BodyType) || BodyType.JSON,
       query: (json["query"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)),
     });
   }
 }
 
-export { ScraperPayload, HTTPMethod };
+export { ScraperPayload, HTTPMethod, BodyType };

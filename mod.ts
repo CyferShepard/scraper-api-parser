@@ -1,6 +1,7 @@
 import { DOMParser, Document } from "./deps.ts";
 import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts";
 export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex, HTTPMethod, BodyType } from "./models/index.ts";
+import fetch from "./classes/fetch.ts";
 
 export async function parseQuery(payload: ScraperPayload, parsedResponse?: Document): Promise<ScraperResponse | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));
@@ -114,37 +115,7 @@ function mergeResults(results: Record<string, unknown>[]): Record<string, unknow
 
 async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
   console.log(`Fetching HTML from: ${payload.url}`);
-  let response;
-  let headers: HeadersInit = {};
-  let body: string | null = null;
-  switch (payload.bodyType) {
-    case "FORM_DATA":
-      headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-      };
-      body = new URLSearchParams(payload.body as Record<string, string>).toString(); // Assuming the first query contains the data to be sent
-      break;
-    case "JSON":
-      headers = {
-        "Content-Type": "application/json",
-      };
-      body = JSON.stringify(payload.body); // Assuming the first query contains the data to be sent
-      break;
-    default:
-      headers = {};
-  }
-  switch (payload.type) {
-    case "POST":
-      response = await fetch(payload.url, {
-        method: "POST",
-        headers: headers,
-        body: body, // Assuming the first query contains the data to be sent
-      });
-      break;
-    default:
-      response = await fetch(payload.url);
-      break;
-  }
+  const response = await fetch.fetch(payload);
 
   if (!response.ok) {
     console.error(`Failed to fetch URL: ${response.status} ${response.statusText}`);

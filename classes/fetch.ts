@@ -1,9 +1,9 @@
-import { launch } from "https://deno.land/x/astral/mod.ts";
+import { launch } from "https://deno.land/x/astral@0.3.5/mod.ts";
 import { ScraperPayload } from "../models/ScraperPayload.ts";
 
 class Fetch {
   static async fetch(payload: ScraperPayload): Promise<Response> {
-    if (payload.waitFor && payload.waitFor.trim() !== "") {
+    if (payload.waitForPageLoad || payload.waitForElement) {
       // Use Puppeteer if waitFor is set
       return await this.fetchWithPuppeteer(payload);
     } else {
@@ -19,7 +19,7 @@ class Fetch {
 
     try {
       // Navigate to the URL
-      await page.goto(payload.url, { waitUntil: "networkidle2" });
+      await page.goto(payload.url, { waitUntil: payload.waitForPageLoad ? "networkidle0" : "load" });
       const body = await page.content(); // Get the response from Puppeteer
       if (!body) {
         console.error(`Failed to load page: ${payload.url}`);
@@ -28,7 +28,9 @@ class Fetch {
       }
 
       // Wait for the specified element
-      await page.waitForSelector(payload.waitFor, { timeout: 10000 });
+      if (payload.waitForElement) {
+        await page.waitForSelector(payload.waitForElement, { timeout: 2000 });
+      }
 
       const response = new Response(body, {
         status: 200, // Astral doesn't provide HTTP status, so assume 200

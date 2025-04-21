@@ -20,7 +20,8 @@ class ScraperPayload {
   type: HTTPMethod;
   body: Record<string, unknown> | FormData;
   bodyType: BodyType;
-  waitFor: string;
+  waitForPageLoad: boolean;
+  waitForElement: string | null;
   query: ScraperQuery[];
 
   constructor({
@@ -28,21 +29,24 @@ class ScraperPayload {
     type = HTTPMethod.GET,
     body = {},
     bodyType = BodyType.JSON,
-    waitFor = "",
+    waitForPageLoad = false,
+    waitForElement,
     query,
   }: {
     url: string;
     type?: HTTPMethod;
     body?: Record<string, unknown> | FormData;
     bodyType?: BodyType;
-    waitFor?: string;
+    waitForPageLoad?: boolean;
+    waitForElement?: string | null;
     query: ScraperQuery[];
   }) {
     this.url = url;
     this.type = type;
     this.body = body;
     this.bodyType = bodyType;
-    this.waitFor = waitFor;
+    this.waitForPageLoad = waitForPageLoad;
+    this.waitForElement = waitForElement || null;
     this.query = query;
   }
 
@@ -52,7 +56,8 @@ class ScraperPayload {
       type: this.type,
       body: new URLSearchParams(this.body as Record<string, string>).toString(),
       bodyType: this.bodyType,
-      waitFor: this.waitFor,
+      waitForPageLoad: this.waitForPageLoad,
+      waitForElement: this.waitForElement || null,
       query: this.query.map((e) => e.toJson()),
     };
   }
@@ -79,7 +84,8 @@ class ScraperPayload {
       type: (json["type"] as HTTPMethod) || HTTPMethod.GET,
       body: body,
       bodyType: (json["bodyType"] as BodyType) || BodyType.JSON,
-      waitFor: json["waitFor"] as string,
+      waitForPageLoad: (json["waitForPageLoad"] as boolean) || false,
+      waitForElement: (json["waitForElement"] as string) || null,
       query: (json["query"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)),
     });
   }

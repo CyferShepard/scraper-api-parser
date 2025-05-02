@@ -25,7 +25,7 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
 
         if (query.subQuery && query.subQuery.length > 0) {
           const subQueryResult: Record<string, unknown> = {};
-          const elementDocument = new DOMParser().parseFromString(element.outerHTML, "text/html")!;
+          const elementDocument = new DOMParser().parseFromString(element.innerHTML, "text/html")!;
           for (const subQuery of query.subQuery) {
             const subPayload = new ScraperPayload({
               url: payload.url,
@@ -44,8 +44,10 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
             addResult(result, query, element.getAttribute("href") || element.getAttribute("src"));
           } else if (query.dataProp) {
             addResult(result, query, element.getAttribute(query.dataProp) || element.getAttribute("src"));
-          } else {
+          } else if (query.getContent) {
             addResult(result, query, element.textContent?.replace(/\s+/g, " ").trim());
+          } else {
+            addResult(result, query, element.innerHTML);
           }
         }
 

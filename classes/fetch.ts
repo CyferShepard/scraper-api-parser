@@ -18,7 +18,7 @@ class Fetch {
     try {
       // Navigate to the URL
       const page = await browser.newPage(payload.url);
-      await page.waitForNetworkIdle({ idleConnections: 0, idleTime: 5000 });
+      await page.waitForNetworkIdle({ idleConnections: 0, idleTime: payload.waitDuration });
       //   await page.goto(payload.url, { waitUntil: payload.waitForPageLoad ? "networkidle0" : "load" });
       //   await Promise.resolve(1000); // Wait for 1 second to ensure the page is fully loaded
       const body = await page.content(); // Get the response from Puppeteer

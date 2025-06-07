@@ -18,9 +18,16 @@ class Fetch {
     try {
       // Navigate to the URL
       const page = await browser.newPage(payload.url);
-      await page.waitForNetworkIdle({ idleConnections: 0, idleTime: 3000 });
+      await page.waitForNetworkIdle({ idleConnections: 0, idleTime: payload.waitDuration });
       //   await page.goto(payload.url, { waitUntil: payload.waitForPageLoad ? "networkidle0" : "load" });
-      await Promise.resolve(payload.waitDuration); // Wait for x miliseconds to ensure the page is fully loaded
+      // await Promise.resolve(payload.waitDuration); // Wait for x miliseconds to ensure the page is fully loaded
+      await page.evaluate(async () => {
+        // Scroll in steps to allow content to load
+        for (let i = 0; i < 10; i++) {
+          window.scrollBy(0, window.innerHeight);
+          await new Promise((res) => setTimeout(res, 500));
+        }
+      });
       const body = await page.content(); // Get the response from Puppeteer
       if (!body) {
         console.error(`Failed to load page: ${payload.url}`);

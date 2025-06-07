@@ -22,6 +22,7 @@ class ScraperPayload {
   bodyType: BodyType;
   waitForPageLoad: boolean;
   waitForElement: string | null;
+  waitDuration: number = 5000;
   query: ScraperQuery[];
 
   constructor({
@@ -31,6 +32,7 @@ class ScraperPayload {
     bodyType = BodyType.JSON,
     waitForPageLoad = false,
     waitForElement,
+    waitDuration,
     query,
   }: {
     url: string;
@@ -39,6 +41,7 @@ class ScraperPayload {
     bodyType?: BodyType;
     waitForPageLoad?: boolean;
     waitForElement?: string | null;
+    waitDuration?: number | null;
     query: ScraperQuery[];
   }) {
     this.url = url;
@@ -47,6 +50,7 @@ class ScraperPayload {
     this.bodyType = bodyType;
     this.waitForPageLoad = waitForPageLoad;
     this.waitForElement = waitForElement || null;
+    this.waitDuration = waitDuration || 5000;
     this.query = query;
   }
 
@@ -58,6 +62,7 @@ class ScraperPayload {
       bodyType: this.bodyType,
       waitForPageLoad: this.waitForPageLoad,
       waitForElement: this.waitForElement || null,
+      waitDuration: this.waitDuration,
       query: this.query.map((e) => e.toJson()),
     };
   }
@@ -86,6 +91,7 @@ class ScraperPayload {
       bodyType: (json["bodyType"] as BodyType) || BodyType.JSON,
       waitForPageLoad: (json["waitForPageLoad"] as boolean) || false,
       waitForElement: (json["waitForElement"] as string) || null,
+      waitDuration: (json["waitDuration"] as number) || 5000,
       query: (json["query"] as Array<Record<string, unknown>>)?.map((e) => ScraperQuery.fromJson(e)),
     });
   }

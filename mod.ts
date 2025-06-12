@@ -70,6 +70,9 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
       // Flatten the results if parsedResponse is null
       results = [mergeResults(results)];
     }
+    // if (!Array.isArray(results)) {
+    //   results = [results];
+    // }
 
     return new ScraperResponse({ url: payload.url, results });
   } else {

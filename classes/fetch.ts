@@ -26,7 +26,9 @@ class Fetch {
   private static async fetchWithPuppeteer(payload: ScraperPayload): Promise<Response> {
     const isWsConfigured: boolean = this.ws !== null && this.token !== null;
     const ws = `ws://${this.ws}?token=${this.token}`;
-    const browser = isWsConfigured ? await connect({ wsEndpoint: ws }) : await launch();
+    const browser = isWsConfigured
+      ? await connect({ wsEndpoint: ws })
+      : await launch({ args: ["--no-sandbox", "--disable-setuid-sandbox"] });
 
     try {
       // Navigate to the URL

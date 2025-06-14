@@ -129,3 +129,8 @@ async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
   const content = await response.text();
   return new DOMParser().parseFromString(content, "text/html");
 }
+
+export function configureAstralBrowser(ws: string, token: string) {
+  fetch.setWs(ws);
+  fetch.setToken(token);
+}

@@ -2,6 +2,17 @@ import { launch } from "https://deno.land/x/astral@0.3.5/mod.ts";
 import { ScraperPayload } from "../models/ScraperPayload.ts";
 
 class Fetch {
+  static ws: string | null = null;
+  static token: string | null = null;
+
+  static setWs(ws: string): void {
+    this.ws = ws;
+  }
+
+  static setToken(token: string): void {
+    this.token = token;
+  }
+
   static async fetch(payload: ScraperPayload): Promise<Response> {
     if (payload.waitForPageLoad || payload.waitForElement) {
       // Use Puppeteer if waitFor is set
@@ -13,7 +24,9 @@ class Fetch {
   }
 
   private static async fetchWithPuppeteer(payload: ScraperPayload): Promise<Response> {
-    const browser = await launch();
+    const isWsConfigured: boolean = this.ws !== null && this.token !== null;
+    const ws = isWsConfigured ? `ws://${this.ws}?token=${this.token}` : null;
+    const browser = isWsConfigured ? await launch({ wsEndpoint: ws }) : await launch();
 
     try {
       // Navigate to the URL

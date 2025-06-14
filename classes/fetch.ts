@@ -1,4 +1,4 @@
-import { launch } from "https://deno.land/x/astral@0.3.5/mod.ts";
+import { launch, connect } from "jsr:@astral/astral";
 import { ScraperPayload } from "../models/ScraperPayload.ts";
 
 class Fetch {
@@ -25,8 +25,8 @@ class Fetch {
 
   private static async fetchWithPuppeteer(payload: ScraperPayload): Promise<Response> {
     const isWsConfigured: boolean = this.ws !== null && this.token !== null;
-    const ws = isWsConfigured ? `ws://${this.ws}?token=${this.token}` : null;
-    const browser = isWsConfigured ? await launch({ wsEndpoint: ws }) : await launch();
+    const ws = `ws://${this.ws}?token=${this.token}`;
+    const browser = isWsConfigured ? await connect({ wsEndpoint: ws }) : await launch();
 
     try {
       // Navigate to the URL

@@ -10,6 +10,7 @@ class ScraperQuery {
   selectItemsAtIndex: number[];
   regex?: ScraperRegex;
   transformProcess?: (value: string) => unknown;
+  finalTransformProcess?: (value: string) => unknown;
 
   constructor({
     label,
@@ -21,6 +22,7 @@ class ScraperQuery {
     selectItemsAtIndex,
     regex,
     transformProcess,
+    finalTransformProcess,
   }: {
     label: string;
     element?: string;
@@ -31,6 +33,7 @@ class ScraperQuery {
     selectItemsAtIndex?: number[];
     regex?: ScraperRegex;
     transformProcess?: (value: string) => unknown;
+    finalTransformProcess?: (value: string) => unknown;
   }) {
     this.label = label;
     this.element = element;
@@ -41,6 +44,7 @@ class ScraperQuery {
     this.selectItemsAtIndex = selectItemsAtIndex ?? [];
     this.regex = regex;
     this.transformProcess = transformProcess;
+    this.finalTransformProcess = finalTransformProcess;
   }
 
   static fromJson(json: Record<string, unknown>): ScraperQuery {
@@ -54,6 +58,7 @@ class ScraperQuery {
       selectItemsAtIndex: (json["selectItemsAtIndex"] as Array<number>) ?? [],
       regex: json["regex"] ? ScraperRegex.fromJson(json["regex"] as Record<string, unknown>) : undefined,
       transformProcess: json["transformProcess"] ? eval(json["transformProcess"] as string) : undefined,
+      finalTransformProcess: json["finalTransformProcess"] ? eval(json["finalTransformProcess"] as string) : undefined,
     });
   }
 
@@ -68,6 +73,7 @@ class ScraperQuery {
       selectItemsAtIndex: this.selectItemsAtIndex ?? [],
       regex: this.regex ? this.regex.toJson() : undefined,
       transformProcess: this.transformProcess ? this.transformProcess.toString() : undefined,
+      finalTransformProcess: this.finalTransformProcess ? this.finalTransformProcess.toString() : undefined,
     };
   }
 }

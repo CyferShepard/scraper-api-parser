@@ -61,6 +61,7 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
           }
         }
         if (Object.keys(result).length > 0) {
+          transformResult(result, query, result[query.label]);
           results.push(result);
         }
       }
@@ -104,6 +105,17 @@ function replaceResult(result: Record<string, unknown>, key: string, value: unkn
     return result;
   }
   result[key] = value;
+  return result;
+}
+
+function transformResult(result: Record<string, unknown>, query: ScraperQuery, value: unknown): Record<string, unknown> {
+  if (value == null || value === "") {
+    return result;
+  }
+  if (query.finalTransformProcess != undefined) {
+    value = query.finalTransformProcess(value as string);
+  }
+  result[query.label] = value;
   return result;
 }
 

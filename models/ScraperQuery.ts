@@ -10,7 +10,7 @@ class ScraperQuery {
   selectItemsAtIndex: number[];
   regex?: ScraperRegex;
   transformProcess?: (value: string) => unknown;
-  finalTransformProcess?: (value: string) => unknown;
+  finalTransformProcess?: (value: any) => unknown;
 
   constructor({
     label,
@@ -33,7 +33,7 @@ class ScraperQuery {
     selectItemsAtIndex?: number[];
     regex?: ScraperRegex;
     transformProcess?: (value: string) => unknown;
-    finalTransformProcess?: (value: string) => unknown;
+    finalTransformProcess?: (value: any) => unknown;
   }) {
     this.label = label;
     this.element = element;

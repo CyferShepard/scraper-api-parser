@@ -31,7 +31,9 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
               url: payload.url,
               query: [subQuery],
             });
-            const subResponse = await parseQuery(subPayload, elementDocument);
+            const useParent = subQuery.element == "use-parent";
+            const parentElementDocument = new DOMParser().parseFromString(element.outerHTML, "text/html")!;
+            const subResponse = await parseQuery(subPayload, useParent ? parentElementDocument : elementDocument);
             if (subResponse && subResponse.results.length > 0) {
               addResult(subQueryResult, subQuery, subResponse.results[0][subQuery.label]);
             }

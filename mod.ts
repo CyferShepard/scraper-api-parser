@@ -2,8 +2,13 @@ import { DOMParser, Document } from "./deps.ts";
 import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts";
 export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex, HTTPMethod, BodyType } from "./models/index.ts";
 import fetch from "./classes/fetch.ts";
+import { Element } from "https://deno.land/x/deno_dom@v0.1.49/deno-dom-wasm.ts";
 
-export async function parseQuery(payload: ScraperPayload, parsedResponse?: Document): Promise<ScraperResponse | null> {
+export async function parseQuery(
+  payload: ScraperPayload,
+  parsedResponse?: Document,
+  parentElement?: Element
+): Promise<ScraperResponse | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));
 
   if (response) {
@@ -11,7 +16,10 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
 
     for (const query of payload.query) {
       if (query.element == undefined || query.element === "") continue; // Skip if the element is empty
-      const elements = response.querySelectorAll(query.element);
+      let elements = Array.from(response.querySelectorAll(query.element));
+      if (elements.length === 0 && parentElement != null) {
+        elements = [parentElement];
+      }
       const result: Record<string, unknown> = {};
 
       // If an selectItemsAtIndex is specified, only process the element at that selectItemsAtIndex
@@ -32,8 +40,8 @@ export async function parseQuery(payload: ScraperPayload, parsedResponse?: Docum
               query: [subQuery],
             });
             const useParent = subQuery.element == "use-parent";
-            const parentElementDocument = new DOMParser().parseFromString(element.outerHTML, "text/html")!;
-            const subResponse = await parseQuery(subPayload, useParent ? parentElementDocument : elementDocument);
+
+            const subResponse = await parseQuery(subPayload, elementDocument, useParent ? element : undefined);
             if (subResponse && subResponse.results.length > 0) {
               addResult(subQueryResult, subQuery, subResponse.results[0][subQuery.label]);
             }

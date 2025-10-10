@@ -11,6 +11,11 @@ export async function parseQuery(
 ): Promise<ScraperResponse | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));
 
+  if (response && !(response instanceof Document) && typeof response === "object") {
+    console.log("Response is a JSON object, parsing...");
+    return parseJsonResponse(response as Record<string, unknown>, payload);
+  }
+
   if (response) {
     let results: Record<string, unknown>[] = [];
 
@@ -99,6 +104,73 @@ export async function parseQuery(
   }
 }
 
+function parseJsonResponse(json: Record<string, unknown>, payload: ScraperPayload): ScraperResponse | null {
+  let results: Record<string, unknown>[] = [];
+
+  for (const query of payload.query) {
+    // Helper to support dot notation for nested fields
+    const getValueByPath = (obj: any, path: string): any => {
+      return path.split(".").reduce((acc, part) => {
+        if (Array.isArray(acc)) {
+          // Map over each item in the array and get the next part
+          return acc.map((item) => item && item[part]).filter((v) => v !== undefined);
+        }
+        return acc && acc[part];
+      }, obj);
+    };
+
+    const value = query.element ? getValueByPath(json, query.element) : json;
+
+    // If value is an array and subQuery is present, map each item
+    if (Array.isArray(value) && query.subQuery && query.subQuery.length > 0) {
+      const group: Record<string, unknown>[] = [];
+      for (const item of value) {
+        const entry: Record<string, unknown> = {};
+        for (const subQuery of query.subQuery) {
+          if (!subQuery.element) continue; // Skip if no label
+          const subValue = subQuery.element ? getValueByPath(item, subQuery.element) : item;
+          addResult(entry, subQuery, subValue);
+          // entry[subQuery.label] = subValue;
+        }
+        group.push(entry);
+      }
+      results.push({ [query.label]: group });
+    } else if (Array.isArray(value)) {
+      // If no subQuery, just map values directly
+      const entry: Record<string, unknown> = {};
+      addResult(entry, query, value);
+      results.push(entry);
+    } else if (query.subQuery && query.subQuery.length > 0 && value && typeof value === "object") {
+      // Single object with subqueries
+      const entry: Record<string, unknown> = {};
+      for (const subQuery of query.subQuery) {
+        const subValue = subQuery.element ? getValueByPath(value, subQuery.element) : value;
+        addResult(entry, subQuery, subValue);
+        // entry[subQuery.label] = subValue;
+      }
+      results.push({ [query.label]: entry });
+    } else if (value !== undefined) {
+      // Single value
+      const entry: Record<string, unknown> = {};
+      addResult(entry, query, value);
+      results.push(entry);
+      // results.push({ [query.label]: value });
+    }
+  }
+
+  if (results.length > 1) {
+    const merged: Record<string, unknown> = {};
+    for (const obj of results) {
+      for (const key in obj) {
+        merged[key] = obj[key];
+      }
+    }
+    results = [merged];
+  }
+
+  return new ScraperResponse({ url: payload.url, results });
+}
+
 function addResult(result: Record<string, unknown>, query: ScraperQuery, value: unknown): Record<string, unknown> {
   if (value == null || value === "") {
     return result;
@@ -148,7 +220,7 @@ function mergeResults(results: Record<string, unknown>[]): Record<string, unknow
   return merged;
 }
 
-async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
+async function fetchHtml(payload: ScraperPayload): Promise<Document | Record<string, unknown> | null> {
   console.log(`Fetching HTML from: ${payload.url}`);
   const response = await fetch.fetch(payload);
 
@@ -157,7 +229,11 @@ async function fetchHtml(payload: ScraperPayload): Promise<Document | null> {
     return null;
   }
   const content = await response.text();
-  return new DOMParser().parseFromString(content, "text/html");
+  try {
+    return JSON.parse(content);
+  } catch {
+    return new DOMParser().parseFromString(content, "text/html");
+  }
 }
 
 export function configureAstralBrowser(ws: string, token: string) {

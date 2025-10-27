@@ -1,8 +1,7 @@
-import { DOMParser, Document } from "./deps.ts";
+import { DOMParser, Document, Element } from "./deps.ts";
 import { ScraperPayload, ScraperQuery, ScraperResponse } from "./models/index.ts";
 export { ScraperPayload, ScraperResponse, ScraperQuery, ScraperRegex, HTTPMethod, BodyType } from "./models/index.ts";
 import fetch from "./classes/fetch.ts";
-import { Element } from "https://deno.land/x/deno_dom@v0.1.49/deno-dom-wasm.ts";
 
 export async function parseQuery(
   payload: ScraperPayload,

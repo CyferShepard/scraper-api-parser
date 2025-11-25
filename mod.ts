@@ -7,7 +7,7 @@ export async function parseQuery(
   payload: ScraperPayload,
   parsedResponse?: Document,
   parentElement?: Element
-): Promise<ScraperResponse | null> {
+): Promise<ScraperResponse | Record<string, unknown> | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));
 
   if (response && !(response instanceof Document) && typeof response === "object") {
@@ -16,7 +16,7 @@ export async function parseQuery(
   }
 
   if (response) {
-    let results: Record<string, unknown>[] = [];
+    const results: Record<string, unknown> = {};
 
     for (const query of payload.query) {
       if (query.element == undefined || query.element === "") continue; // Skip if the element is empty
@@ -46,8 +46,14 @@ export async function parseQuery(
             const useParent = subQuery.element == "use-parent";
 
             const subResponse = await parseQuery(subPayload, elementDocument, useParent ? element : undefined);
-            if (subResponse && subResponse.results.length > 0) {
-              addResult(subQueryResult, subQuery, subResponse.results[0][subQuery.label]);
+            if (subResponse && typeof subResponse === "object" && !(subResponse instanceof ScraperResponse)) {
+              if (Array.isArray(subResponse)) {
+                for (const res of subResponse) {
+                  addResult(subQueryResult, subQuery, res[subQuery.label]);
+                }
+              } else {
+                addResult(subQueryResult, subQuery, subResponse[subQuery.label]);
+              }
             }
           }
           if (Object.keys(subQueryResult).length > 0) {
@@ -74,30 +80,39 @@ export async function parseQuery(
             replaceResult(result, query.label, processedValue);
           }
         }
-        if (Object.keys(result).length > 0) {
-          results.push(result);
+      }
+
+      if (Object.keys(result).length > 0) {
+        const newValue = result[query.label];
+        if (results[query.label]) {
+          if (Array.isArray(results[query.label]) && Array.isArray(newValue)) {
+            // Concatenate arrays
+            results[query.label] = (results[query.label] as unknown[]).concat(newValue);
+          } else if (Array.isArray(results[query.label])) {
+            // Push single value to array
+            (results[query.label] as unknown[]).push(newValue);
+          } else if (Array.isArray(newValue)) {
+            // Merge single value and array
+            results[query.label] = [results[query.label], ...newValue];
+          } else {
+            // Both are single values, make array
+            results[query.label] = [results[query.label], newValue];
+          }
+        } else {
+          results[query.label] = newValue;
         }
       }
 
       if (query.finalTransformProcess != undefined) {
-        // Apply final transformation to the result
-
-        const r = results.filter((r) => r[query.label] !== undefined);
-        if (r.length > 0) {
-          transformResult(r[0], query, r[0][query.label]);
-        }
+        transformResult(results, query, results[query.label]);
       }
     }
-
-    if (!parsedResponse) {
-      // Flatten the results if parsedResponse is null
-      results = [mergeResults(results)];
+    if (parsedResponse) {
+      return results;
     }
-    // if (!Array.isArray(results)) {
-    //   results = [results];
-    // }
 
-    return new ScraperResponse({ url: payload.url, results });
+    let fresults: Record<string, unknown>[] = [results];
+    return new ScraperResponse({ url: payload.url, results: fresults });
   } else {
     return null;
   }
@@ -174,12 +189,19 @@ function addResult(result: Record<string, unknown>, query: ScraperQuery, value: 
   if (value == null || value === "") {
     return result;
   }
-  if (query.transformProcess != undefined) {
+  if (query.transformProcess != undefined && typeof value != "object") {
     value = query.transformProcess(value as string);
   }
-  if (result[query.label]) {
-    if (Array.isArray(result[query.label])) {
+
+  if (result[query.label] && Array.isArray(result[query.label])) {
+    if (Array.isArray(value)) {
+      (result[query.label] as unknown[]).concat(value);
+    } else {
       (result[query.label] as unknown[]).push(value);
+    }
+  } else if (result[query.label]) {
+    if (Array.isArray(value)) {
+      result[query.label] = (result[query.label] as unknown[]).concat(value);
     } else {
       result[query.label] = [result[query.label], value];
     }
@@ -206,17 +228,6 @@ function transformResult(result: Record<string, unknown>, query: ScraperQuery, v
   }
   result[query.label] = value;
   return result;
-}
-
-function mergeResults(results: Record<string, unknown>[]): Record<string, unknown> {
-  const merged: Record<string, unknown> = {};
-
-  for (const result of results) {
-    const key = Object.keys(result)[0];
-    merged[key] = result[key];
-  }
-
-  return merged;
 }
 
 async function fetchHtml(payload: ScraperPayload): Promise<Document | Record<string, unknown> | null> {

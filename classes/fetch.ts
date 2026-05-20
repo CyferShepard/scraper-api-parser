@@ -74,6 +74,11 @@ class Fetch {
     let response;
     let headers: HeadersInit = {};
     let body: string | null = null;
+    // Default browser-like headers to reduce server blocking (Cloudflare, etc.)
+    const defaultHeaders: HeadersInit = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    };
     switch (payload.bodyType) {
       case "FORM_DATA":
         headers = {
@@ -90,16 +95,21 @@ class Fetch {
       default:
         headers = {};
     }
+
+    headers = { ...defaultHeaders, ...headers };
     switch (payload.type) {
       case "POST":
         response = await fetch(payload.url, {
           method: "POST",
-          headers: headers,
+          headers: { ...defaultHeaders, ...(headers as Record<string, string>) },
           body: body, // Assuming the first query contains the data to be sent
         });
         break;
       default:
-        response = await fetch(payload.url);
+        response = await fetch(payload.url, {
+          method: "GET",
+          headers: { ...defaultHeaders, ...(headers as Record<string, string>) },
+        });
         break;
     }
 

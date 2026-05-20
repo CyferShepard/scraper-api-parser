@@ -265,3 +265,7 @@ export function configureAstralBrowser(ws: string, token: string) {
   fetch.setWs(ws);
   fetch.setToken(token);
 }
+
+export function setDefaultHeaders(headers: HeadersInit): void {
+  fetch.setDefaultHeaders(headers);
+}

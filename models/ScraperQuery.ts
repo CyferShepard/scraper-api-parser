@@ -3,6 +3,7 @@ import ScraperRegex from "./ScraperRegex.ts";
 class ScraperQuery {
   label: string;
   element: string | undefined;
+  subElements: string[];
   getContent: boolean;
   withHref: boolean;
   dataProp?: string;
@@ -15,6 +16,7 @@ class ScraperQuery {
   constructor({
     label,
     element,
+    subElements = [],
     getContent = true,
     withHref = false,
     dataProp,
@@ -26,6 +28,7 @@ class ScraperQuery {
   }: {
     label: string;
     element?: string;
+    subElements?: string[];
     getContent?: boolean;
     withHref?: boolean;
     dataProp?: string;
@@ -37,6 +40,7 @@ class ScraperQuery {
   }) {
     this.label = label;
     this.element = element;
+    this.subElements = subElements;
     this.getContent = getContent;
     this.withHref = withHref;
     this.dataProp = dataProp;
@@ -51,6 +55,7 @@ class ScraperQuery {
     return new ScraperQuery({
       label: json["label"] as string,
       element: json["element"] as string,
+      subElements: (json["subElements"] as Array<string>) ?? [],
       getContent: json["getContent"] as boolean,
       withHref: json["withHref"] as boolean,
       dataProp: json["dataProp"] as string,
@@ -66,6 +71,7 @@ class ScraperQuery {
     return {
       label: this.label,
       element: this.element,
+      subElements: this.subElements,
       getContent: this.getContent,
       withHref: this.withHref,
       dataProp: this.dataProp,

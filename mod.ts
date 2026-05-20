@@ -6,7 +6,7 @@ import fetch from "./classes/fetch.ts";
 export async function parseQuery(
   payload: ScraperPayload,
   parsedResponse?: Document,
-  parentElement?: Element
+  parentElement?: Element,
 ): Promise<ScraperResponse | Record<string, unknown> | null> {
   const response = parsedResponse ?? (await fetchHtml(payload));
 
@@ -20,7 +20,22 @@ export async function parseQuery(
 
     for (const query of payload.query) {
       if (query.element == undefined || query.element === "") continue; // Skip if the element is empty
-      let elements = Array.from(response.querySelectorAll(query.element));
+
+      let elements: Element[] = Array.from(response.querySelectorAll(query.element)) as Element[];
+      if (query.subElements && query.subElements.length > 0) {
+        for (const subElement of query.subElements) {
+          elements = elements.flatMap((element) => {
+            if (element.tagName === "TEMPLATE") {
+              // Create a temporary document from the template's inner HTML so its kids become queryable
+              const tempDoc = new DOMParser().parseFromString(element.innerHTML, "text/html")!;
+              return Array.from(tempDoc.querySelectorAll(subElement)) as Element[];
+            }
+
+            // Otherwise, query it normally
+            return Array.from(element.querySelectorAll(subElement)) as Element[];
+          });
+        }
+      }
       if (elements.length === 0 && parentElement != null) {
         elements = [parentElement];
       }
